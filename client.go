@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	// Время, оставленное для записи сообщения одноранговому узлу.	
+	// Время для записи сообщения одноранговому узлу.	
 	writeWait = 10 * time.Second
 
 	// Время, для прочтения следующиего pong сообщение из peer.
@@ -84,7 +84,7 @@ func (c *Client) writePump() {
 				return
 			}
 
-			// Создаем "Писателя."
+			// Создаем объект для записи. 
 			w, err := c.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
 				return
