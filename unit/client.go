@@ -14,12 +14,6 @@ const (
 	maxMessageSize = 1024
 )
 
-var (
-	newline = []byte{'\n'}
-	space   = []byte{' '}
-)
-
-// Клиент - это промежуточный узел между сокет-соединением и хабом.
 type Client struct {
 	id   int
 	hub  *Hub
@@ -38,23 +32,19 @@ func (c *Client) ReadPump() {
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
 	for {
-		_, _, err := c.conn.ReadMessage()
+		m := Message{}
+
+		err := c.conn.ReadJSON(&m)
 
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
-
-				break
 			}
+
+			break
 		}
 
-		m := Message{}
-
-		if err := c.conn.ReadJSON(&m); err != nil {
-			log.Printf("Error reading json.", err)
-		} else {
-			c.hub.send <- &m
-		}
+		c.hub.send <- &m
 	}
 }
 

@@ -26,7 +26,6 @@ func (h *Hub) Run() {
 			if _, ok := h.clients[client.id]; ok {
 				close(client.send)
 				delete(h.clients, client.id)
-
 			}
 		case message := <-h.send:
 			if client, ok := h.clients[message.Client_id]; ok {
