@@ -3,17 +3,22 @@ package main
 import (
 	"log"
 	"net/http"
+
+	"github.com/Umarbatalov/mess/unit"
+	"github.com/gorilla/mux"
 )
 
 func main() {
-	hub := newHub()
-	go hub.run()
+	hub := unit.NewHub()
+	go hub.Run()
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(hub, w, r)
+	r := mux.NewRouter()
+
+	r.HandleFunc("/{id:[0-9]+}", func(w http.ResponseWriter, r *http.Request) {
+		unit.WS(hub, w, r)
 	})
 
-	err := http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":8080", r)
 
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
