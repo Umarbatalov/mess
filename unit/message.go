@@ -1,7 +1,6 @@
 package unit
 
 type Message struct {
-	id        int
-	client_id int
-	data      []byte
+	Client_id int
+	Data      string
 }

@@ -1,9 +1,7 @@
 package unit
 
 import (
-	"bytes"
 	"log"
-	"math/rand"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -13,7 +11,7 @@ const (
 	writeWait      = 10 * time.Second
 	pongWait       = 60 * time.Second
 	pingPeriod     = (pongWait * 9) / 10
-	maxMessageSize = 512
+	maxMessageSize = 1024
 )
 
 var (
@@ -26,7 +24,7 @@ type Client struct {
 	id   int
 	hub  *Hub
 	conn *websocket.Conn
-	send chan []byte
+	send chan *Message
 }
 
 func (c *Client) ReadPump() {
@@ -40,17 +38,23 @@ func (c *Client) ReadPump() {
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
 	for {
-		_, data, err := c.conn.ReadMessage()
+		_, _, err := c.conn.ReadMessage()
+
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
+
+				break
 			}
-			break
 		}
 
-		data = bytes.TrimSpace(bytes.Replace(data, newline, space, -1))
+		m := Message{}
 
-		c.hub.send <- Message{id: rand.Intn(5), client_id: c.id, data: data}
+		if err := c.conn.ReadJSON(&m); err != nil {
+			log.Printf("Error reading json.", err)
+		} else {
+			c.hub.send <- &m
+		}
 	}
 }
 
@@ -64,28 +68,14 @@ func (c *Client) WritePump() {
 
 	for {
 		select {
-		case message, ok := <-c.send:
+		case m, ok := <-c.send:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
 
-			// Создаем объект для записи.
-			w, err := c.conn.NextWriter(websocket.TextMessage)
-			if err != nil {
-				return
-			}
-			w.Write(message)
-
-			// Add queued chat messages to the current websocket message.
-			n := len(c.send)
-			for i := 0; i < n; i++ {
-				w.Write(newline)
-				w.Write(<-c.send)
-			}
-
-			if err := w.Close(); err != nil {
+			if connectionErr := c.conn.WriteJSON(m); connectionErr != nil {
 				return
 			}
 		case <-ticker.C:

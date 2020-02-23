@@ -28,14 +28,14 @@ func WS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 			id:   id,
 			hub:  hub,
 			conn: conn,
-			send: make(chan []byte, 256),
+			send: make(chan *Message),
 		}
 
 		client.hub.register <- client
 
 		log.Println("CLient connected, id:", client.id)
 
-		go client.WritePump()
 		go client.ReadPump()
+		go client.WritePump()
 	}
 }
