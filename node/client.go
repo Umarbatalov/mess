@@ -1,10 +1,11 @@
-package unit
+package node
 
 import (
 	"log"
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/Umarbatalov/mess/model"
 )
 
 const (
@@ -18,7 +19,7 @@ type Client struct {
 	id   int
 	hub  *Hub
 	conn *websocket.Conn
-	send chan *Message
+	send chan *model.Message
 }
 
 func (c *Client) ReadPump() {
@@ -32,8 +33,7 @@ func (c *Client) ReadPump() {
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
 	for {
-		m := Message{}
-
+		m := model.Message{}
 		err := c.conn.ReadJSON(&m)
 
 		if err != nil {
@@ -60,6 +60,7 @@ func (c *Client) WritePump() {
 		select {
 		case m, ok := <-c.send:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+
 			if !ok {
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
@@ -70,6 +71,7 @@ func (c *Client) WritePump() {
 			}
 		case <-ticker.C:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}

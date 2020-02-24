@@ -1,4 +1,4 @@
-package unit
+package node
 
 import (
 	"log"
@@ -7,11 +7,11 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/Umarbatalov/mess/model"
 )
 
 
-// Обработчик для веб-сокет запроса.
-func WS(hub *Hub, w http.ResponseWriter, r *http.Request) {
+func WebSocketHandler(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	conn, err := websocket.Upgrade(w, r, nil, 1024, 1024)
 
 	if err != nil {
@@ -28,7 +28,7 @@ func WS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 			id:   id,
 			hub:  hub,
 			conn: conn,
-			send: make(chan *Message),
+			send: make(chan *model.Message),
 		}
 
 		client.hub.register <- client

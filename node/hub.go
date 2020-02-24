@@ -1,9 +1,10 @@
-package unit
+package node
 
-// Хаб - регистрирует в себе клиентов
+import "github.com/Umarbatalov/mess/model"
+
 type Hub struct {
 	clients    map[int]*Client
-	send       chan *Message
+	send       chan *model.Message
 	register   chan *Client
 	unregister chan *Client
 }
@@ -11,7 +12,7 @@ type Hub struct {
 func NewHub() *Hub {
 	return &Hub{
 		clients:    make(map[int]*Client),
-		send:       make(chan *Message),
+		send:       make(chan *model.Message),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 	}
@@ -28,7 +29,7 @@ func (h *Hub) Run() {
 				delete(h.clients, client.id)
 			}
 		case message := <-h.send:
-			if client, ok := h.clients[message.Client_id]; ok {
+			if client, ok := h.clients[message.Receiver]; ok {
 				select {
 				case client.send <- message:
 				default:
