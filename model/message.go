@@ -1,7 +1,11 @@
 package model
 
 type Message struct {
-	Sender    int
-	Receiver  int
-	Data      string
+	Sender    int    `json:"sender"`
+	Receiver  int    `json:"receiver"`
+	Data      string `json:"data"`
+}
+
+func NewMessage() *Message {
+	return &Message{}
 }

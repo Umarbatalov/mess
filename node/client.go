@@ -33,8 +33,9 @@ func (c *Client) ReadPump() {
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
 	for {
-		m := model.Message{}
-		err := c.conn.ReadJSON(&m)
+		m := model.NewMessage()
+
+		err := c.conn.ReadJSON(m)
 
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
@@ -44,7 +45,7 @@ func (c *Client) ReadPump() {
 			break
 		}
 
-		c.hub.send <- &m
+		c.hub.send <- m
 	}
 }
 
@@ -66,7 +67,9 @@ func (c *Client) WritePump() {
 				return
 			}
 
-			if connectionErr := c.conn.WriteJSON(m); connectionErr != nil {
+			connectionErr := c.conn.WriteJSON(m)
+
+			if connectionErr != nil {
 				return
 			}
 		case <-ticker.C:
